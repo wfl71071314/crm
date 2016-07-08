@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.DrainMapper">
+
+	
+	<update id="confirm">
+		update customer_drains set reason=#{reason},status='流失',drain_date=#{confirmDate}
+		where id=#{id}
+	</update>
+
+	<update id="delay">
+		update customer_drains set delay=#{delay}
+		where id=#{id}
+	</update>
+
+	<select id="getById" resultMap="drainMap">
+		select 	cr.id,cr.delay,cr.drain_date,cr.last_order_date,cr.reason,
+				cr.status,cr.customer_id,c.name as "custName",
+				c.manager_id,
+				co.name as "custManName"
+				from customer_drains cr
+				left outer join customers c
+				on cr.customer_id=c.id
+				left outer join contacts co
+				on c.manager_id=co.id
+		where cr.id=#{id}
+	</select>
+	
+	<resultMap type="com.atguigu.crm.entity.CustomerDrain" id="drainMap">
+		<id column="cr.id" property="id"/>
+		<result column="cr.delay" property="delay"/>
+		<result column="cr.drain_date" property="drainDate"/>
+		<result column="cr.last_order_date" property="lastOrderDate"></result>
+		<result column="cr.reason" property="reason"/>
+		<result column="cr.status" property="cr.status"/>
+		
+		<result column="cr.customer_id" property="customer.id"/>
+		
+		<result column="custName" property="customer.name"/>
+		
+		<result column="c.manager_id" property="customer.manager.id"/>
+		
+		<result column="custManName" property="customer.manager.name"/>
+		
+		
+	</resultMap>
+	
+	<select id="getContent" resultMap="drainMap">
+		select *
+			from(
+				select rownum rn,cr.id,cr.delay,cr.drain_date,cr.last_order_date,cr.reason,
+				cr.status,cr.customer_id,c.name as "custName",
+				c.manager_id,
+				co.name as "custManName"
+				from customer_drains cr
+				left outer join customers c
+				on cr.customer_id=c.id
+				left outer join contacts co
+				on c.manager_id=co.id
+			<where>
+				<if test="custName!=null">
+					and c.name like #{custName}
+				</if>
+				<if test="custManName!=null">
+					and co.name like #{custManName}
+				</if>
+			</where>
+			)
+			<![CDATA[
+				where rn>=#{fromIndex} and rn<#{endIndex}
+			]]>
+	</select>
+		
+	
+	<select id="getTotalElements" resultType="Long">
+		select count(*)
+		from(
+			select cr.id,cr.delay,cr.drain_date,cr.last_order_date,cr.reason,
+			cr.status,cr.customer_id,c.name as "custName",
+			c.manager_id,
+			co.name as "custManName"
+			from customer_drains cr
+			left outer join customers c
+			on cr.customer_id=c.id
+			left outer join contacts co
+			on c.manager_id=co.id
+		)
+		<where>
+			<if test="custName!=null">
+				and "custName" like #{custName}
+			</if>
+			<if test="custManName!=null">
+				and "custManName" like #{custManName}
+			</if>
+		</where>
+	</select>
+	
+</mapper>

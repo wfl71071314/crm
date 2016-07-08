@@ -1,0 +1,28 @@
+4. 导入数据库脚本.
+
+3. oracle 删除用户, 创建用户, 授权:
+
+drop user atguigu cascade;
+
+create user atguigu identified by atguigu;
+grant connect, resource, dba to atguigu;
+
+2. @ControllerAdvice 的作用:
+1). 用于处理全局的异常.
+
+@ControllerAdvice
+public class MyExceptionHandler {
+
+	@ExceptionHandler({ArithmeticException.class})
+	public String handleException(){
+		System.out.println("出异常了");
+		return "error";
+	}
+	
+}
+
+默认情况下, @ExceptionHandler 注解只能处理出现在当前 Controller 中的异常.
+若把 @ExceptionHandler 所在的类前面使用 @ControllerAdvice 来修饰, 则其可以处理全局的异常.
+
+1. 使用的技术:
+Spring、SpringMVC、mybatis、shiro、jfreechart、POI、easyui...

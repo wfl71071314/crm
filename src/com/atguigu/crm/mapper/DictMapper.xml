@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.DictMapper">
+
+	<sql id="queryCondiction">
+		<where>
+			<if test="type!=null">
+				and type like #{type}
+			</if>
+			<if test="item!=null">
+				and item like #{item}
+			</if>
+			<if test="value!=null">
+				and value like #{value}
+			</if>
+		</where>
+	</sql>
+	
+	<select id="getByType" resultType="java.lang.String">
+		select item 
+		from dicts
+		where type=#{type}
+	</select>
+	
+	<update id="update">
+		update dicts set editable=#{editable},item=#{item},type=#{type},value=#{value} 
+		where id=#{id}
+	</update>
+	
+	<select id="getById" resultType="com.atguigu.crm.entity.Dict">
+		select id,editable,item,type,value
+			from dicts
+			where id=#{id}
+	</select>
+	
+	<delete id="delete">
+		delete from dicts
+		where id=#{id}
+	</delete>
+	
+	<insert id="save">
+		insert into dicts(id,editable,item,type,value)
+		values(crm_seq.nextval,#{editable},#{item},#{type},#{value})
+	</insert>
+	
+	<select id="getContent2" resultType="com.atguigu.crm.entity.Dict">
+		select *
+		from(
+			select rownum rn,id,editable,item,type,value
+			from dicts
+			<include refid="queryCondiction"></include>
+		)s
+		<![CDATA[
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+	</select>
+
+	<select id="getTotalElements2" resultType="Long">
+		select count(*) 
+		from dicts
+		<include refid="queryCondiction"></include>
+	</select>
+
+	<select id="getTotalElements" resultType="Long">
+		select count(*) from dicts
+	</select>
+
+	<select id="getPage2" resultType="com.atguigu.crm.entity.Dict">
+		select *
+		from(
+			select rownum rn,id,editable,item,type,value
+			from dicts
+		)s
+		<![CDATA[
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+		
+	</select>
+
+</mapper>

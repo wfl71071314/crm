@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.CustomerServiceMapper">
+
+	<select id="getById" resultMap="map">
+		select c.id,c.service_type,c.service_title,c.service_state,c.deal_date,c.satisfy,c.deal_result,c.service_deal,c.allot_id,us.name as "allotoName",c.allot_date,c.service_request,c.customer_id,c.create_date,
+			cu.name as "custName", c.created_id,u.name as "createdName"
+			from customer_services c
+			left outer join customers cu
+			on c.customer_id=cu.id
+			left outer join users u
+			on c.created_id=u.id
+			left outer join users us
+			on c.allot_id=us.id
+		where c.id=#{id}
+	</select>
+	
+	<update id="feedBack">
+		update customer_services set deal_result=#{dealResult},satisfy=#{satisfy},service_state='已归档'
+		where id=#{id}
+	</update>
+	
+	<update id="deal">
+		update customer_services set deal_date=#{dealDate},service_deal=#{serviceDeal},
+		service_state=#{serviceState}
+		where id=#{id}
+	</update>
+	
+	<update id="allot">
+		update customer_services set allot_id=#{allotId},service_state='已分配',allot_date=#{allotDate}
+		where id=#{id}
+	</update>
+
+	<delete id="delete">
+		delete from customer_services
+		where id=#{id}
+	</delete>
+
+	<insert id="create">
+		insert into customer_services(id,service_type,service_title,customer_id,service_request,create_date)
+		values(crm_seq.nextval,#{serviceType},#{serviceTitle},#{customer.id},#{serviceRequest},#{createDate})
+	</insert>
+	<resultMap type="com.atguigu.crm.entity.CustomerService" id="map">
+		<id column="id" property="id"/>
+		<result column="service_type" property="serviceType"/>
+		<result column="service_title" property="serviceTitle"/>
+		<result column="service_request" property="serviceRequest"/>
+		<result column="service_state" property="serviceState"/>
+		<result column="customer_id" property="customer.id"/>
+		<result column="create_date" property="createDate"/>
+		<result column="custName" property="customer.name"/>
+		<result column="created_id" property="createdby.id"/>
+		<result column="createdName" property="createdby.name"/>
+		<result column="allot_date" property="allotDate"/>
+		<result column="allotoName" property="allotTo.name"/>
+		<result column="service_deal" property="serviceDeal"/>
+		<result column="deal_date" property="dealDate"/>
+		<result column="satisfy" property="satisfy"/>
+		<result column="deal_result" property="dealResult"/>
+	</resultMap>
+
+	<select id="getContent" resultMap="map">
+		select *
+			from(
+				select rownum rn,c.id,c.service_type,c.service_title,c.service_state,c.service_request,c.customer_id,c.create_date,
+				cu.name as "custName", c.created_id,u.name as "createdName"
+				from customer_services c
+				left outer join customers cu
+				on c.customer_id=cu.id
+				left outer join users u
+				on c.created_id=u.id
+				<where>
+					<if test="serviceType!=null">
+						and c.service_type like #{serviceType}
+					</if>
+					<if test="serviceTitle!=null">
+						and c.service_title like #{serviceTitle}
+					</if>
+					<if test="custName!=null">
+						and cu.name = #{custName}
+					</if>
+					<if test="minCreateDate!=null">
+						and c.create_date > #{minCreateDate}
+					</if>
+					<if test="serviceState!=null">
+						and c.service_state = #{serviceState}
+					</if>
+					<if test="maxCreateDate!=null">
+						<![CDATA[
+							and c.create_date < #{maxCreateDate}
+						]]>
+					</if>
+				</where>
+			)
+			<![CDATA[
+				where rn>=#{fromIndex} and rn<#{endIndex}
+			]]>
+			
+	</select>
+
+	<select id="getTotalElements" resultType="Long">
+		select count(*)
+			from(
+				select c.id,c.service_type,c.service_title,c.service_state,c.service_request,c.customer_id,c.create_date,
+				cu.name as "custName", c.created_id,u.name as "createdName"
+				from customer_services c
+				left outer join customers cu
+				on c.customer_id=cu.id
+				left outer join users u
+				on c.created_id=u.id
+			)
+			<where>
+				<if test="serviceType!=null">
+					and service_type like #{serviceType}
+				</if>
+				<if test="serviceTitle!=null">
+					and service_title like #{serviceTitle}
+				</if>
+				<if test="custName!=null">
+					and "custName" = #{custName}
+				</if>
+				<if test="minCreateDate!=null">
+					and create_date > #{minCreateDate}
+				</if>
+				<if test="serviceState!=null">
+						and service_state = #{serviceState}
+					</if>
+				<if test="maxCreateDate!=null">
+					<![CDATA[
+						and create_date < #{maxCreateDate}
+					]]>
+				</if>
+			</where>
+	</select>
+	
+	
+</mapper>
