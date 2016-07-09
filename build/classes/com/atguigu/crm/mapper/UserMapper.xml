@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 修改 mapper 的命名空间 -->
+<mapper namespace="com.atguigu.crm.mapper.UserMapper">
+
+	<sql id="queryCondition">
+		<where>
+			<if test="name!=null">
+				and name like #{name}
+			</if>	
+			<if test="enabled!=null">
+				and enabled=#{enabled}
+			</if>		
+		</where>
+	</sql>
+	
+	<select id="getAll" resultType="com.atguigu.crm.entity.User">
+		select id,name,password,enabled
+		from users
+	</select>
+	
+	<delete id="delete">
+		delete from users
+		where id=#{id}
+	</delete>
+	
+	<update id="update">
+		update users set name=#{name},enabled=#{enabled},password=#{password},role_id=#{role.id}
+		where id=#{id}
+	</update>
+	
+	<insert id="save">
+		insert into users(id,name,enabled,password,role_id)
+		values(crm_seq.nextval,#{name},#{enabled},#{password},#{role.id})
+	</insert>
+
+	<select id="getById" resultType="com.atguigu.crm.entity.User">
+		SELECT u.id,u.name,u.enabled,u.password,r.name AS "role.name"
+		FROM users u 
+		LEFT OUTER JOIN roles r
+		ON u.role_id = r.id
+		where u.id=#{id}
+	</select>
+	
+	<select id="getContent" resultType="com.atguigu.crm.entity.User">
+		select *
+		from(
+			SELECT rownum rn,id,name,enabled,password
+			from users
+		<include refid="queryCondition"></include>
+		)
+		<![CDATA[
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+	</select>
+
+	<select id="getTotalElements" resultType="Long">
+		SELECT count(*)
+		from users
+		<include refid="queryCondition"></include>
+	</select>
+
+	<resultMap type="com.atguigu.crm.entity.User" id="userMap">
+		<id column="id" property="id"/>
+		<result column="name" property="name"/>
+		<result column="enabled" property="enabled"/>
+		<result column="password" property="password"/>
+		<result column="salt" property="salt"/>
+		
+		<result column="role.name" property="role.name"/>
+		<collection property="role.authorities" ofType="com.atguigu.crm.entity.Authority">
+			<id column="a_id" property="id"/>
+			<result column="a_display_name" property="displayName"/>
+			<result column="a_url" property="url"/>
+			<result column="a_name" property="name"/>
+			
+			<result column="p_id" property="parentAuthority.id"/>		
+			<result column="p_display_name" property="parentAuthority.displayName"/>	
+		</collection>
+	</resultMap>
+	
+	<select id="getByName" resultMap="userMap">
+		SELECT u.id, u.name, u.enabled, u.password,salt,
+		r.name AS "role.name",
+		a.id as "a_id",a.display_name as "a_display_name",a.url as "a_url",a.name as "a_name",
+		p.id as "p_id",p.display_name as "p_display_name"
+		FROM users u 
+		LEFT OUTER JOIN roles r
+		ON u.role_id = r.id
+		left outer join role_authority ra
+		on r.id=ra.role_id
+		left outer join authorities a
+		on a.id=ra.authority_id
+		left outer join authorities p
+		on a.parent_authority_id=p.id
+		WHERE u.name = #{name}
+	</select>
+</mapper>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.ProductMapper">
+	<sql id="queryConditon">
+		<where>
+			<if test="name!=null">
+				and name like #{name}
+			</if>
+			<if test="type!=null">
+				and type like #{type}
+			</if>
+			<if test="batch!=null">
+				and batch like #{batch}
+			</if>
+		</where>		
+	</sql>
+	
+	<select id="getAll" resultType="com.atguigu.crm.entity.Product">
+		select id,name
+		from products
+	</select>
+	
+	<select id="getContent" resultType="com.atguigu.crm.entity.Product">
+		select *
+		from(
+			select rownum rn,id,name,type,batch,unit,price,memo
+			from products
+			<include refid="queryConditon"></include>
+		)
+		<![CDATA[
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+	</select>
+	
+	<select id="getTotalElements" resultType="Long">
+		select count(*)
+		from products
+		<include refid="queryConditon"></include>
+	</select>
+
+	<update id="update">
+		update products set name=#{name},type=#{type},batch=#{batch},unit=#{unit},price=#{price},memo=#{memo}
+		where id=#{id}
+	</update>
+	
+	<insert id="save">
+		insert into products(id,name,type,batch,unit,price,memo)
+		values(crm_seq.nextval,#{name},#{type},#{batch},#{unit},#{price},#{memo})
+	</insert>
+	
+	<select id="getById" resultType="com.atguigu.crm.entity.Product">
+		select id,name,type,batch,unit,price,memo
+			from products
+			where id=#{id}
+	</select>
+	
+	<delete id="delete">
+		delete from products
+		where id=#{id}
+	</delete>
+	
+	<select id="getList2" resultType="com.atguigu.crm.entity.Product">
+		select *
+		from(
+			select rownum rn,id,name,type,batch,unit,price,memo
+			from products
+		)s
+		<![CDATA[
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+	
+	</select>
+	
+	<select id="getTotalElements2" resultType="Long">
+		select count(*)
+		from products
+	</select>
+	
+</mapper>

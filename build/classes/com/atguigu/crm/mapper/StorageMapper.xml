@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.StorageMapper">
+
+	<select id="getContent2" resultMap="storageMap">
+		select *
+		
+			from(
+				select rownum rn,s.id,s.memo,s.stock_count,s.stock_ware,s.ware_house,s.product_id,p.name as "product.name"
+				from storages s
+				left outer join products p
+				on s.product_id=p.id
+				<where>
+					<if test="pname!=null">
+						and "product.name" like #{product.name}
+					</if>
+					<if test="wareHouse!=null">
+						and ware_house like #{wareHouse}
+					</if>
+				</where>
+			)s
+			<![CDATA[
+				where rn>=#{fromIndex} and rn<#{endIndex}
+			]]>
+	</select>
+
+	<select id="getTotalElements" resultType="Long">
+		select count(*) 
+		<![CDATA[
+			from (
+				select s.id,s.memo,s.stock_count,s.stock_ware,s.ware_house,s.product_id,p.name as "product.name"
+					from storages s
+					left outer join products p
+					on s.product_id=p.id
+			)a
+		]]>
+		<where>
+			<if test="pname!=null">
+				and a."product.name" like #{product.name}
+			</if>
+			<if test="wareHouse!=null">
+				and a.ware_house like #{wareHouse}
+			</if>
+		</where>
+	</select>
+	
+	<delete id="delete">
+		delete from storages
+		where id=#{id}
+	</delete>
+
+	<update id="update">
+		update storages set stock_count=#{stockCount}
+		where id=#{id}
+	</update>
+
+	<insert id="save">
+		insert into storages(id,memo,stock_count,stock_ware,ware_house,product_id)
+		values(crm_seq.nextval,#{memo},#{stockCount},#{stockWare},#{wareHouse},#{product.id})
+	</insert>
+
+	<select id="getById" resultMap="storageMap">
+		select s.id,s.memo,s.stock_count,s.stock_ware,s.ware_house,s.product_id,p.name as "product.name"
+				from storages s
+				left outer join products p
+				on s.product_id=p.id
+				where s.id=#{id}
+	</select>
+
+	<resultMap type="com.atguigu.crm.entity.Storage" id="storageMap">
+		<id column="s.id" property="id"/>
+		<result column="s.memo" property="memo"/>
+		<result column="s.stock_count" property="stockCount"/>
+		<result column="s.stock_ware" property="stockWare"/>
+		<result column="s.ware_house" property="wareHouse"/>
+		<result column="s.product_id" property="product.id"/>
+		<result column="product.name" property="product.name"/>
+	</resultMap>
+	
+	<select id="getPage2" resultMap="storageMap">
+		select *
+		<![CDATA[
+			from(
+				select rownum rn,s.id,s.memo,s.stock_count,s.stock_ware,s.ware_house,s.product_id,p.name as "product.name"
+				from storages s
+				left outer join products p
+				on s.product_id=p.id
+			)s
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+	</select>
+	
+	<select id="getTotalElements2" resultType="Long">
+		select count(*) 
+		from storages
+	</select>
+
+</mapper>

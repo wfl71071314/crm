@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.RoleMapper">
+
+	<insert id="batchSave">
+		insert into role_authority(role_id,authority_id)
+		<foreach open="(" close=")" collection="authorities" item="item" separator="union">
+			select 
+				#{id},	
+				#{item.id}
+			from dual
+		</foreach>
+	</insert>
+	
+	<delete id="deleteAuth">
+		delete from role_authority
+		where role_id=#{id}
+	</delete>
+
+	<update id="update">
+		update roles set description=#{description},enabled=#{enabled},name=#{name}
+		where id=#{id}
+	</update>
+	
+	<resultMap type="com.atguigu.crm.entity.Role" id="roleMap">
+		<id column="id" property="id" />
+		<result column="name" property="name"/>
+		<result column="enabled" property="enabled"/>
+		<result column="description" property="description"/>
+		
+		<collection property="authorities" ofType="com.atguigu.crm.entity.Authority">
+			<id column="a_id" property="id"/>
+		</collection>
+	</resultMap>
+
+	<select id="getById" resultMap="roleMap">
+		SELECT r.id, r.name, r.enabled, r.description, a.id AS "a_id"
+		FROM roles r
+		LEFT OUTER JOIN role_authority ra
+		ON r.id = ra.role_id
+		LEFT OUTER JOIN authorities a
+		ON a.id = ra.authority_id 
+		WHERE r.id = #{id}
+	</select>
+
+	<insert id="save">
+		insert into roles(id,description,enabled,name)
+		values(crm_seq.nextval,#{description},#{enabled},#{name})
+	</insert>
+	
+	<select id="getAll" resultType="com.atguigu.crm.entity.Role">
+		select id,name,description,enabled
+		from roles
+	</select>
+	
+	<delete id="delete">
+		delete from roles
+		where id=#{id}
+	</delete>
+	
+	<select id="getList" resultType="com.atguigu.crm.entity.Role">
+		select *
+		from(
+			select rownum rn,id,name,description,enabled
+			from roles
+		)
+		<![CDATA[
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+	</select>
+	
+	<select id="getTotalElement" resultType="Long">
+		select count(*) from roles
+	</select>
+</mapper>

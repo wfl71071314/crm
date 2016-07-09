@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.SalesChanceMapper">
+	
+	<!-- 把查询条件额外的提取出来. -->
+	<sql id="chanceQueryCondition">
+		WHERE status = #{status} AND created_user_id = #{createBy.id}
+		<if test="custName != null">
+			AND cust_name LIKE #{custName}
+		</if>
+		<if test="title != null">
+			AND title LIKE #{title}
+		</if>
+		<if test="contact != null">
+			AND contact LIKE #{contact}
+		</if>
+	</sql>
+	
+	<update id="dispatch">
+		update sales_chances set status = #{status},designee_id=#{designee.id},
+		designee_date=#{designeeDate}
+		where id=#{id}
+	</update>
+	
+	<select id="getContent2" resultType="com.atguigu.crm.entity.SalesChance">
+		SELECT *
+		FROM(
+			SELECT rownum rn, id, cust_name, title, contact, contact_tel, create_date
+			FROM sales_chances
+			<include refid="chanceQueryCondition"/>
+		) s
+		<![CDATA[
+		WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+	
+	<select id="getTotalElements2" resultType="long">
+		SELECT count(id)
+		FROM sales_chances 
+		<include refid="chanceQueryCondition"/>
+	</select>
+	
+	<!-- <resultMap type="com.atguigu.crm.entity.SalesChance" id="salesChanceMap">
+		<id column="id" property="id"/>
+		<result column="source" property="source"/>
+		<result column="title" property="title"/>
+		<result column="cust_name" property="custName"/>
+		<result column="contact" property="contact"/>
+		<result column="contact_tel" property="contactTel"/>
+		<result column="rate" property="rate"/>
+		<result column="description" property="description"/>
+		<result column="create_date" property="createDate"/>
+		<result column="created_user_id" property="createBy.id"/>
+		<result column="createdName" property="createBy.name"/>
+	</resultMap> -->
+	
+	<select id="getById" resultType="com.atguigu.crm.entity.SalesChance">
+		SELECT s.id, s.source, s.title, s.cust_name, s.contact, s.contact_tel, s.rate,
+		s.description, s.create_date,s.created_user_id,u.name as "createBy.name"
+		FROM sales_chances s
+		left outer join users u
+		on s.created_user_id=u.id
+		WHERE s.id = #{id}
+	</select>
+	
+	<update id="update">
+		UPDATE sales_chances SET source = #{source}, title = #{title}, 
+		cust_name = #{custName}, contact = #{contact}, contact_tel = #{contactTel}, 
+		rate = #{rate}, description = #{description}
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM sales_chances
+		WHERE id = #{id}
+	</delete>
+	
+	<!--  
+	主键需要使用序列生成. 
+	-->
+	<insert id="save">
+		INSERT INTO sales_chances(id, source, title, cust_name, contact, contact_tel, rate, description, created_user_id, create_date, status)
+		VALUES(crm_seq.nextval, #{source}, #{title}, #{custName}, #{contact}, #{contactTel}, #{rate}, #{description}, #{createBy.id}, #{createDate}, #{status})
+	</insert>
+	
+	<!--  
+	Oracle 的分页需要借助于 rownum
+	1. rownum 本身不支持 > 和 >=
+	SELECT rownum rn, id, cust_name, title, contact, contact_tel, create_date
+	FROM sales_chances
+	WHERE rownum > 5
+	
+	2. 但使用子查询之后可以
+	SELECT *
+	FROM(
+		SELECT rownum rn, id, cust_name, title, contact, contact_tel, create_date
+		FROM sales_chances
+	)
+	WHERE rn > 5
+	
+	3. 区间一定是半闭半开, 或半开半闭. 
+	-->
+	<select id="getContent" resultType="com.atguigu.crm.entity.SalesChance">
+		SELECT *
+		FROM(
+			SELECT rownum rn, id, cust_name, title, contact, contact_tel, create_date
+			FROM sales_chances
+			WHERE status = #{status} AND created_user_id = #{createBy.id}
+		) s
+		<![CDATA[
+		WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+
+	<select id="getTotalElements" resultType="Long">
+		SELECT count(id)
+		FROM sales_chances 
+		WHERE status = #{status} AND created_user_id = #{createBy.id}
+	</select>
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.ReportDrainMapper">
+
+	<resultMap type="com.atguigu.crm.entity.CustomerDrain" id="customerDrainMap">
+		<id column="id" property="id"/>
+		<result column="drain_date" property="drainDate"/>
+		<result column="reason" property="reason"/>
+		<result column="customer_id" property="customer.id"/>
+		<result column="custName" property="customer.name"/>
+		<result column="manager_id" property="customer.manager.id"/>
+		<result column="custManaName" property="customer.manager.name"/>
+	</resultMap>
+	
+	
+	<select id="getContent" resultMap="customerDrainMap">
+	
+		select *
+		from(
+			select rownum rn,cd.id,cd.drain_date,cd.reason,cd.customer_id,
+			c.name as "custName",
+			c.manager_id,co.name as "custManaName"
+			from customer_drains cd
+			left outer join customers c
+			on cd.customer_id=c.id
+			left outer join contacts co
+			on c.manager_id=co.id
+			<where>
+				<if test="custName!=null">
+					and c.name like #{custName}
+				</if>
+				<if test="custManaName!=null">
+					and co.name like #{custManaName}
+				</if>
+			</where>
+		)
+		<![CDATA[
+			where rn>=#{fromIndex} and rn<#{endIndex}
+		]]>
+	</select>
+	
+	<select id="getTotalElements" resultType="Long">
+		select count(*)
+		from(
+			select cd.id,cd.drain_date,cd.reason,cd.customer_id,
+			c.name as "custName",
+			c.manager_id,co.name as "custManaName"
+			from customer_drains cd
+			left outer join customers c
+			on cd.customer_id=c.id
+			left outer join contacts co
+			on c.manager_id=co.id
+		)
+		<where>
+			<if test="custName!=null">
+				and "custName" like #{custName}
+			</if>
+			<if test="custManaName!=null">
+				and "custManaName" like #{custManaName}
+			</if>
+		</where>
+	</select>
+</mapper>
